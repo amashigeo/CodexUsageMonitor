@@ -1,0 +1,12 @@
+{
+  "checkedAt":"2026-11-12",
+  "source":"https://developers.openai.com/api/docs/pricing",
+  "fallback":"gpt-6.1-sol",
+  "rates":{
+    "gpt-6-astra":[10,1,50,12.5],
+    "gpt-6.1-sol":[2,0.1,10,2.5],
+    "gpt-6.1-terra":[1,0.05,5,1.25],
+    "gpt-6-sol":[2,0.2,10,2.5],
+    "gpt-6-luna":[0.1,0.01,0.5,0.125]
+  }
+}

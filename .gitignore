@@ -1,0 +1,13 @@
+.build/
+dist/
+node_modules/
+*.exe
+*.zip
+**/widget-settings.json
+**/reset-credits-cache.json
+**/.ready
+**/auth.json
+**/*.jsonl
+*.log
+.env
+.env.*
