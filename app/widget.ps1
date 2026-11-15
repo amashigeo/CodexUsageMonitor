@@ -101,9 +101,12 @@ $trayIcon.Add_MouseClick({ param($sender,$e) if ($e.Button -eq [Windows.Forms.Mo
 $trayIcon.Visible = -not $SelfTest
 Update-Pin
 $controls.Stats.Add_Click({
+ try {
+ & (Join-Path $PSScriptRoot 'launch.ps1') -ServerOnly
  $url = 'http://127.0.0.1:47831/stats'
  $edge = Join-Path ${env:ProgramFiles(x86)} 'Microsoft/Edge/Application/msedge.exe'
  if (Test-Path -LiteralPath $edge) { Start-Process -FilePath $edge -ArgumentList @("--app=$url", '--window-size=1180,880') -WindowStyle Normal } else { Start-Process $url }
+ } catch { [Windows.MessageBox]::Show($_.Exception.Message,'无法打开扩展统计') | Out-Null }
 })
 $controls.Pin.Add_Click({ $window.Topmost = -not $window.Topmost; Update-Pin })
 $controls.Minimize.Add_Click({ Hide-Widget })
