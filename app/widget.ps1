@@ -6,14 +6,14 @@ $widgetMutex = New-Object System.Threading.Mutex($false, $widgetMutexName)
 if (-not $widgetMutex.WaitOne(0)) { $widgetMutex.Dispose(); exit }
 $settingsPath = Join-Path $PSScriptRoot 'widget-settings.json'
 [xml]$xaml = @'
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Codex 便签" Width="352" Height="570" MinWidth="280" MinHeight="340" WindowStyle="None" ResizeMode="CanResizeWithGrip" AllowsTransparency="False" Background="#F5F5E9" Topmost="True" FontFamily="Microsoft YaHei UI" FontSize="12" Foreground="#39473D" ShowInTaskbar="False">
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="Codex 便签" Width="352" Height="610" MinWidth="280" MinHeight="340" WindowStyle="None" ResizeMode="CanResizeWithGrip" AllowsTransparency="False" Background="#F5F5E9" Topmost="True" FontFamily="Microsoft YaHei UI" FontSize="12" Foreground="#39473D" ShowInTaskbar="False">
  <WindowChrome.WindowChrome><WindowChrome CaptionHeight="0" ResizeBorderThickness="6" GlassFrameThickness="0" CornerRadius="9" UseAeroCaptionButtons="False"/></WindowChrome.WindowChrome>
  <Window.Resources>
   <Style TargetType="Button"><Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Foreground" Value="#687568"/><Setter Property="Padding" Value="6,3"/><Setter Property="Cursor" Value="Hand"/><Setter Property="FontSize" Value="11"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}"><ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#E1E6D4"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>
   <Style TargetType="ProgressBar"><Setter Property="Height" Value="4"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Background" Value="#E0E4D5"/><Setter Property="Foreground" Value="#81956C"/></Style>
  </Window.Resources>
  <Border Background="#F5F5E9" BorderBrush="#D9DEC9" BorderThickness="1" CornerRadius="9" Padding="12,10">
-  <Grid><Grid.RowDefinitions><RowDefinition Height="46"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+  <Grid><Grid.RowDefinitions><RowDefinition Height="46"/><RowDefinition Height="*"/><RowDefinition Height="36"/></Grid.RowDefinitions>
 <Grid x:Name="TitleBar" Background="Transparent"><Grid.RowDefinitions><RowDefinition Height="24"/><RowDefinition/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="22"/><ColumnDefinition Width="22"/></Grid.ColumnDefinitions><StackPanel Orientation="Horizontal"><Image RenderOptions.BitmapScalingMode="HighQuality" Source="mascot-title.png" Width="27" Height="27" Margin="0,-1,7,0"/><TextBlock Text="Codex" FontSize="15" FontWeight="SemiBold"/></StackPanel><TextBlock x:Name="Plan" Grid.Column="1" Foreground="#81956C" Margin="0,3,8,0"/><Button x:Name="Pin" Grid.Column="2" Content="已置顶" VerticalAlignment="Top"/><Button x:Name="Minimize" Grid.Column="3" Content="−" ToolTip="收起到托盘" VerticalAlignment="Top"/><Button x:Name="Close" Grid.Column="4" Content="×" ToolTip="隐藏到托盘，右键退出" VerticalAlignment="Top"/><TextBlock x:Name="Status" Grid.Row="1" Grid.ColumnSpan="5" Text="更新 —" Foreground="#98A08E" FontSize="12"/></Grid>
 <ScrollViewer x:Name="Body" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,6,0,0"><StackPanel>
 <Grid Height="43" Margin="0,0,0,2"><TextBlock Text="5 小时"/><TextBlock x:Name="FiveValue" Text="—" HorizontalAlignment="Right" FontWeight="SemiBold"/><ProgressBar x:Name="FiveBar" Margin="0,19,0,0" VerticalAlignment="Top"/><TextBlock x:Name="FiveReset" Text="读取中" FontSize="12" Foreground="#8C9587" Margin="0,26,0,0"/></Grid>
@@ -26,7 +26,8 @@ $settingsPath = Join-Path $PSScriptRoot 'widget-settings.json'
 <Grid Margin="0,0,0,3"><TextBlock Text="最近会话" Foreground="#8C9587"/><TextBlock x:Name="Running" Text="—" HorizontalAlignment="Right" Foreground="#81956C" FontSize="12" ToolTip="根据本机日志估计，非官方实时状态"/></Grid>
 <StackPanel x:Name="Sessions"/>
 </StackPanel></ScrollViewer>
-<ResizeGrip Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="12" Height="12" WindowChrome.ResizeGripDirection="BottomRight" Opacity="0.45"/>
+<Button Grid.Row="2" x:Name="Stats" Content="扩展统计 ↗" Background="#E1EAD9" FontSize="12" Margin="0,6,0,0"/>
+<ResizeGrip Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="12" Height="12" WindowChrome.ResizeGripDirection="BottomRight" Opacity="0.45"/>
 </Grid>
  </Border>
 </Window>
@@ -35,7 +36,7 @@ $xaml.SelectSingleNode("//*[local-name()='Image']").SetAttribute('Source',(Join-
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $controls = @{}
-foreach ($name in @('TitleBar','Pin','Minimize','Close','FiveValue','FiveBar','FiveReset','WeekValue','WeekBar','WeekReset','Rate','Eta','CacheHit','CacheMiss','CacheRate','OutputTokens','Speed','Status','Plan','ResetInfo','Running','Sessions','TodayTotal','MonthTotal','TodayCost','MonthCost')) { $controls[$name] = $window.FindName($name) }
+foreach ($name in @('TitleBar','Pin','Minimize','Close','FiveValue','FiveBar','FiveReset','WeekValue','WeekBar','WeekReset','Rate','Eta','CacheHit','CacheMiss','CacheRate','OutputTokens','Speed','Status','Plan','ResetInfo','Running','Sessions','TodayTotal','MonthTotal','TodayCost','MonthCost','Stats')) { $controls[$name] = $window.FindName($name) }
 $workArea = [System.Windows.SystemParameters]::WorkArea
 $window.Left = $workArea.Right - $window.Width - 24
 $window.Top = $workArea.Top + 60
@@ -47,7 +48,7 @@ try {
   $window.Left = [Math]::Max($workArea.Left, [Math]::Min([double]$saved.left, $workArea.Right - $window.Width))
   $window.Top = [Math]::Max($workArea.Top, [Math]::Min([double]$saved.top, $workArea.Bottom - $window.Height))
   $window.Topmost = [bool]$saved.pinned
-  if ($saved.layoutVersion -lt 160) { $window.Width = 352; $window.Height = 570 }
+  if ($saved.layoutVersion -lt 180) { $window.Width = 352; $window.Height = 610 }
  }
 } catch {}
 function Update-Pin {
@@ -57,7 +58,7 @@ function Update-Pin {
  Save-WidgetSettings
 }
 function Save-WidgetSettings {
- if (-not $SelfTest) { try { @{layoutVersion=160;left=$window.Left;top=$window.Top;width=$window.Width;height=$window.Height;pinned=$window.Topmost} | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8 } catch {} }
+ if (-not $SelfTest) { try { @{layoutVersion=180;left=$window.Left;top=$window.Top;width=$window.Width;height=$window.Height;pinned=$window.Topmost} | ConvertTo-Json | Set-Content -LiteralPath $settingsPath -Encoding UTF8 } catch {} }
 }
 function Hide-Widget { Save-WidgetSettings; $window.Hide() }
 function Show-Widget { $window.Show(); $window.WindowState = 'Normal'; $null = $window.Activate() }
@@ -99,6 +100,11 @@ $trayIcon.ContextMenuStrip = $trayMenu
 $trayIcon.Add_MouseClick({ param($sender,$e) if ($e.Button -eq [Windows.Forms.MouseButtons]::Left) { Toggle-Widget } })
 $trayIcon.Visible = -not $SelfTest
 Update-Pin
+$controls.Stats.Add_Click({
+ $url = 'http://127.0.0.1:47831/stats'
+ $edge = Join-Path ${env:ProgramFiles(x86)} 'Microsoft/Edge/Application/msedge.exe'
+ if (Test-Path -LiteralPath $edge) { Start-Process -FilePath $edge -ArgumentList @("--app=$url", '--window-size=1180,880') -WindowStyle Normal } else { Start-Process $url }
+})
 $controls.Pin.Add_Click({ $window.Topmost = -not $window.Topmost; Update-Pin })
 $controls.Minimize.Add_Click({ Hide-Widget })
 $controls.Close.Add_Click({ Hide-Widget })

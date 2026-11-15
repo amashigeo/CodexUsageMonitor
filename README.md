@@ -6,6 +6,12 @@
 
 **[下载最新版 EXE](https://github.com/amashigeo/CodexUsageMonitor/releases/latest)**
 
+## v1.8.0 扩展统计
+
+便签底部新增 **扩展统计** 按钮，在独立窗口查看本日、本周、本月、本年的 token 与 API 金额。每日用量以 GitHub 风格方块图显示，支持按 token 或金额着色，点击日期查看数据。各时间范围按会话汇总花费，支持搜索与金额 / token 排序。
+
+本周从周一开始。本年数据来自本机仍保留的日志；首次启动会扫描年度历史，完成前页面提示部分统计。年度统计按日期和会话聚合在内存中，不新增聊天存档。
+
 ## 功能
 
 - 5 小时、每周已用额度与重置时间。
@@ -23,7 +29,7 @@
 3. 拖动标题移动窗口，拖动边框调整大小；右上角按钮切换置顶。
 4. 减号或叉号收起到托盘。单击托盘图标显示 / 隐藏，右键可置顶或退出。找不到图标时查看托盘的“∧”。
 
-首次启动会将程序解压到 `%LOCALAPPDATA%\CodexUsageMonitor\app-1.7.0`，启动本地统计服务。首次扫描可能稍慢。托盘“退出”关闭便签；彻底停止后台服务可运行该目录里的 `停止监控.cmd`。升级前请先停止旧版服务，再运行新 EXE。
+首次启动会将程序解压到 `%LOCALAPPDATA%\CodexUsageMonitor\app-1.8.0`，启动本地统计服务。首次扫描可能稍慢。托盘“退出”关闭便签；彻底停止后台服务可运行该目录里的 `停止监控.cmd`。升级前请先停止旧版服务，再运行新 EXE。
 
 也可以直接运行源码目录 `app/启动面板.cmd`，需要 Node.js 20+；启动器也会尝试查找本机 Codex 附带的 Node.js。
 
@@ -50,7 +56,7 @@
 ## 开发与测试
 
 ```powershell
-node --test app/test.cjs app/quota-client.test.cjs app/cost.test.cjs
+node --test app/test.cjs app/quota-client.test.cjs app/cost.test.cjs app/analytics.test.cjs
 node app/server.cjs
 powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File app/widget.ps1 -SelfTest
 ```
