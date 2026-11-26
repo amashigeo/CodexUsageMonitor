@@ -11,7 +11,9 @@ test('partial log writes, duplicate cumulative totals and per-session sums',asyn
  const prefix=[{type:'session_meta',payload:{id:'test-thread',cwd:'test-project'}},{type:'turn_context',payload:{model:'test-model'}},{timestamp:stamp,type:'event_msg',payload:{type:'task_started'}}].map(JSON.stringify).join('\n')+'\n';
  await fs.writeFile(path.join(home,'session_index.jsonl'),JSON.stringify({id:'test-thread',thread_name:'Test session'})+'\n');
  const file=path.join(home,'sessions','a.jsonl');await fs.writeFile(file,prefix+event(100)+'\n'+event(100)+'\n'+event(200).slice(0,50));
- const child=spawn(process.execPath,[path.join(__dirname,'server.cjs')],{env:{...process.env,CODEX_HOME:home,CODEX_USAGE_PORT:'47839',CODEX_USAGE_DISABLE_REMOTE:'1'},windowsHide:true,stdio:'ignore'});
+ const startServer=()=>spawn(process.execPath,[path.join(__dirname,'server.cjs')],{env:{...process.env,CODEX_HOME:home,CODEX_USAGE_ARCHIVE:path.join(home,'usage-history.json'),CODEX_USAGE_PORT:'47839',CODEX_USAGE_DISABLE_REMOTE:'1'},windowsHide:true,stdio:'ignore'});
+ let child=startServer();
+ const stopServer=async()=>{if(child.exitCode!==null)return;const exited=new Promise(resolve=>child.once('exit',resolve));child.kill();await exited;};
  async function read(){return (await fetch('http://127.0.0.1:47839/api/status')).json()}
  try{let s;for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,100));try{s=await read();if(s.lastScan)break}catch{}}assert.equal(s.today.total_tokens,110.00000000000001);await fs.appendFile(file,event(200).slice(50)+'\n');for(let i=0;i<70;i++){await new Promise(r=>setTimeout(r,100));s=await read();if(s.today.input_tokens===200)break}assert.equal(s.today.input_tokens,200);assert.equal(s.today.output_tokens,20);assert.equal(s.buckets[0].primary.used,4);
  assert.equal(s.sessions[0].title,'Test session');assert.equal(s.sessions[0].model,'test-model');assert.equal(s.sessions[0].tokens,220.00000000000003);assert.equal(s.runningCount,1);assert.equal(s.month.input_tokens,200);assert.ok(s.sessions[0].estimatedUsd>0);assert.equal(s.sessions[0].estimatedUsd,s.month.estimated_usd);assert.equal(s.sessions[0].contextTokens,220);assert.equal(s.sessions[0].contextPercent,22);
@@ -19,5 +21,22 @@ test('partial log writes, duplicate cumulative totals and per-session sums',asyn
  await fs.appendFile(file,JSON.stringify({timestamp:stamp,type:'event_msg',payload:{type:'task_complete'}})+'\n');
  for(let i=0;i<70;i++){await new Promise(r=>setTimeout(r,100));s=await read();if(s.runningCount===0)break;}assert.equal(s.runningCount,0);
  const denied=await new Promise((resolve,reject)=>{const req=require('node:http').get('http://127.0.0.1:47839/api/status',{headers:{host:'evil.example'}},res=>{res.resume();resolve(res.statusCode)});req.on('error',reject)});assert.equal(denied,403);
- }finally{child.kill();await new Promise(r=>child.once('exit',r));await fs.rm(home,{recursive:true,force:true});}
+ const saved=JSON.parse(await fs.readFile(path.join(home,'usage-history.json'),'utf8'));
+ assert.equal(saved.days[0][1][0][1].input_tokens,200);
+ await stopServer();
+ child=startServer();
+ for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,100));try{s=await read();if(s.lastScan&&!s.scanning)break;}catch{}}
+ assert.equal(s.today.input_tokens,200);
+ assert.equal(s.fileCount,1);
+ await stopServer();
+ await fs.unlink(file);
+ await fs.unlink(path.join(home,'session_index.jsonl'));
+ child=startServer();
+ for(let i=0;i<40;i++){await new Promise(r=>setTimeout(r,100));try{s=await read();if(s.lastScan&&!s.scanning)break;}catch{}}
+ assert.equal(s.fileCount,0);
+ assert.equal(s.today.input_tokens,200);
+ const archived=await(await fetch('http://127.0.0.1:47839/api/analytics')).json();
+ assert.equal(archived.periods.month.sessions[0].title,'Test session');
+ assert.equal(archived.periods.month.estimated_usd,details.periods.month.estimated_usd);
+ }finally{await stopServer();await fs.unlink(path.join(home,'usage-history.json')).catch(()=>{});await fs.unlink(path.join(home,'session_index.jsonl')).catch(()=>{});await fs.unlink(file).catch(()=>{});await fs.rmdir(path.join(home,'sessions'));await fs.rmdir(home);}
 });

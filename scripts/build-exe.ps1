@@ -1,9 +1,10 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $workspaceRoot = Split-Path $PSScriptRoot -Parent
 $appPath = Join-Path $workspaceRoot 'app'
-$stagePath = Join-Path $workspaceRoot '.build/exe-stage'
+$stagePath = Join-Path $workspaceRoot ('.build/exe-stage-' + [guid]::NewGuid())
 New-Item -ItemType Directory -Path $stagePath -Force | Out-Null
-Get-ChildItem -LiteralPath $appPath -File | Where-Object { $_.Name -notin @('widget-settings.json','reset-credits-cache.json') -and $_.Name -notlike '*.test.cjs' -and $_.Name -ne 'test.cjs' } | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $stagePath $_.Name) -Force }
+$runtimeFiles = @('app.js','index.html','style.css','stats.html','stats.js','stats.css','analytics.cjs','usage-archive.cjs','cost.cjs','launch.ps1','mascot-title.png','mascot.ico','mascot.png','metrics.cjs','NODE-LICENSE.txt','package.json','pricing.json','quota-client.cjs','refresh-policy.cjs','reset-cache.cjs','server.cjs','stop.ps1','widget.ps1','启动面板.cmd','停止监控.cmd')
+foreach ($name in $runtimeFiles) { Copy-Item -LiteralPath (Join-Path $appPath $name) -Destination (Join-Path $stagePath $name) -Force }
 Copy-Item -LiteralPath (Get-Command node.exe).Source -Destination (Join-Path $stagePath 'node.exe') -Force
 $zipPath = Join-Path $workspaceRoot '.build/payload.zip'
 Compress-Archive -Path (Join-Path $stagePath '*') -DestinationPath $zipPath -Force -CompressionLevel Optimal

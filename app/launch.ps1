@@ -1,7 +1,7 @@
 param([switch]$ServerOnly)
 $ErrorActionPreference = 'Stop'
 $monitorUrl = 'http://127.0.0.1:47831'
-$expectedVersion = '1.8.1'
+$expectedVersion = '1.8.2'
 function Start-Monitor {
  $status = $null
  try { $status = Invoke-RestMethod "$monitorUrl/api/status" -TimeoutSec 2 } catch {}

@@ -1,1 +1,1 @@
-{"name":"codex-usage-monitor","version":"1.8.1","private":true,"scripts":{"start":"node server.cjs","test":"node --test test.cjs quota-client.test.cjs cost.test.cjs analytics.test.cjs"},"engines":{"node":">=20"}}
+{"name":"codex-usage-monitor","version":"1.8.2","private":true,"scripts":{"start":"node server.cjs","test":"node --test test.cjs quota-client.test.cjs cost.test.cjs analytics.test.cjs"},"engines":{"node":">=20"}}

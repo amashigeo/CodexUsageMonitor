@@ -5,6 +5,8 @@ node_modules/
 *.zip
 **/widget-settings.json
 **/reset-credits-cache.json
+**/usage-history-*.json
+**/usage-history-*.json.*.tmp
 **/.ready
 **/auth.json
 **/*.jsonl
